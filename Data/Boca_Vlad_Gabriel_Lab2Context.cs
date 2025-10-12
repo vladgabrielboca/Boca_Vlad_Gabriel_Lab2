@@ -1,0 +1,21 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Boca_Vlad_Gabriel_Lab2.Models;
+
+namespace Boca_Vlad_Gabriel_Lab2.Data
+{
+    public class Boca_Vlad_Gabriel_Lab2Context : DbContext
+    {
+        public Boca_Vlad_Gabriel_Lab2Context (DbContextOptions<Boca_Vlad_Gabriel_Lab2Context> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<Boca_Vlad_Gabriel_Lab2.Models.Book> Book { get; set; } = default!;
+        public DbSet<Boca_Vlad_Gabriel_Lab2.Models.Publisher> Publisher { get; set; } = default!;
+        public DbSet<Boca_Vlad_Gabriel_Lab2.Models.Author> Author { get; set; } = default!;
+    }
+}
