@@ -8,7 +8,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddDbContext<Boca_Vlad_Gabriel_Lab2Context>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Boca_Vlad_Gabriel_Lab2Context") ?? throw new InvalidOperationException("Connection string 'Boca_Vlad_Gabriel_Lab2Context' not found.")));
 
-var app = builder.Build();
+var app = builder.Build();  
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
