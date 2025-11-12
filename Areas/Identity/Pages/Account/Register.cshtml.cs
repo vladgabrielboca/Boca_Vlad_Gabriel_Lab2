@@ -118,21 +118,32 @@ namespace Boca_Vlad_Gabriel_Lab2.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+            // Verificăm dacă datele din formular sunt valide (ex: parolele se potrivesc)
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
+                // 1. Încercăm să creăm utilizatorul Identity
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
-                Member.Email = Input.Email;
-                _context.Member.Add(Member);
-                await _context.SaveChangesAsync();
-
+                // 2. Verificăm dacă utilizatorul Identity a fost creat CU SUCCES
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
+
+                    // --- ÎNCEPUTUL BLOCULUI DE COD MUTAT ȘI CORECTAT (Pașii 19/20) ---
+
+                    // 3. DOAR DACĂ a reușit, inițializăm și salvăm noul Membru
+                    Member = new Member(); // Inițializăm obiectul pentru a evita eroarea NullReference
+                    Member.Email = Input.Email; // Setăm email-ul
+                    _context.Member.Add(Member); // Îl adăugăm la context
+                    await _context.SaveChangesAsync(); // Îl salvăm în baza de date
+
+                    // --- SFÂRȘITUL BLOCULUI DE COD MUTAT ȘI CORECTAT ---
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -156,15 +167,70 @@ namespace Boca_Vlad_Gabriel_Lab2.Areas.Identity.Pages.Account
                         return LocalRedirect(returnUrl);
                     }
                 }
+
+                // 4. Dacă 'result.Succeeded' a fost fals (ex: parolă prea slabă), afișăm erorile
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
 
-            // If we got this far, something failed, redisplay form
+            // Dacă ModelState nu a fost valid, reîncărcăm pagina
             return Page();
         }
+
+        //public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        //{
+        //    returnUrl ??= Url.Content("~/");
+        //    ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+        //    if (ModelState.IsValid)
+        //    {
+        //        var user = CreateUser();
+
+        //        await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+        //        await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+        //        var result = await _userManager.CreateAsync(user, Input.Password);
+
+        //        Member = new Member();
+        //        Member.Email = Input.Email;
+        //        _context.Member.Add(Member);
+        //        await _context.SaveChangesAsync();
+
+        //        if (result.Succeeded)
+        //        {
+        //            _logger.LogInformation("User created a new account with password.");
+
+        //            var userId = await _userManager.GetUserIdAsync(user);
+        //            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        //            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+        //            var callbackUrl = Url.Page(
+        //                "/Account/ConfirmEmail",
+        //                pageHandler: null,
+        //                values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+        //                protocol: Request.Scheme);
+
+        //            await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
+        //                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+        //            if (_userManager.Options.SignIn.RequireConfirmedAccount)
+        //            {
+        //                return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
+        //            }
+        //            else
+        //            {
+        //                await _signInManager.SignInAsync(user, isPersistent: false);
+        //                return LocalRedirect(returnUrl);
+        //            }
+        //        }
+        //        foreach (var error in result.Errors)
+        //        {
+        //            ModelState.AddModelError(string.Empty, error.Description);
+        //        }
+        //    }
+
+        //    // If we got this far, something failed, redisplay form
+        //    return Page();
+        //}
 
         private IdentityUser CreateUser()
         {

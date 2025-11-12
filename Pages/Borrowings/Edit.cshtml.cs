@@ -36,8 +36,19 @@ namespace Boca_Vlad_Gabriel_Lab2.Pages.Borrowings
                 return NotFound();
             }
             Borrowing = borrowing;
-           ViewData["BookID"] = new SelectList(_context.Book, "ID", "ID");
-           ViewData["MemberID"] = new SelectList(_context.Member, "ID", "ID");
+
+            ViewData["MemberID"] = new SelectList(_context.Member, "ID", "ID");
+
+            var bookList = _context.Book
+                .Include(b => b.Author)
+                .Select(x => new
+                {
+                    x.ID,
+                    BookFullName = x.Title + " by " + x.Author.FullName
+                });
+
+            ViewData["BookID"] = new SelectList(_context.Book, "ID", "BookFullName");
+
             return Page();
         }
 
