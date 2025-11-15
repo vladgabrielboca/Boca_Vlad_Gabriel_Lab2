@@ -127,24 +127,18 @@ namespace Boca_Vlad_Gabriel_Lab2.Areas.Identity.Pages.Account
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
 
-                // 1. Încercăm să creăm utilizatorul Identity
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
-                // 2. Verificăm dacă utilizatorul Identity a fost creat CU SUCCES
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
 
-                    // --- ÎNCEPUTUL BLOCULUI DE COD MUTAT ȘI CORECTAT (Pașii 19/20) ---
+                    Member = new Member();
+                    Member.Email = Input.Email;
+                    _context.Member.Add(Member);
+                    await _context.SaveChangesAsync();
 
-                    // 3. DOAR DACĂ a reușit, inițializăm și salvăm noul Membru
-                    Member = new Member(); // Inițializăm obiectul pentru a evita eroarea NullReference
-                    Member.Email = Input.Email; // Setăm email-ul
-                    _context.Member.Add(Member); // Îl adăugăm la context
-                    await _context.SaveChangesAsync(); // Îl salvăm în baza de date
-
-                    // --- SFÂRȘITUL BLOCULUI DE COD MUTAT ȘI CORECTAT ---
-
+                    var role = await _userManager.AddToRoleAsync(user, "User");
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -168,7 +162,6 @@ namespace Boca_Vlad_Gabriel_Lab2.Areas.Identity.Pages.Account
                     }
                 }
 
-                // 4. Dacă 'result.Succeeded' a fost fals (ex: parolă prea slabă), afișăm erorile
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
